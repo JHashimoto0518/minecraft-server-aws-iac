@@ -1,6 +1,7 @@
 import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
+import { readFileSync } from 'fs';
 
 export class McStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -40,53 +41,8 @@ export class McStack extends Stack {
     //
     // Minecraft server
     //
-    const userDataScript = `#!/bin/bash
-
-    # *** INSERT SERVER DOWNLOAD URL BELOW ***
-    # Do not add any spaces between your link and the "=", otherwise it won't work. EG: MINECRAFTSERVERURL=https://urlexample
-    
-    # Minecraft 1.20.4.jar download link
-    MINECRAFTSERVERURL=https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar
-    
-    
-    # Download Java
-    sudo yum install -y java-17-amazon-corretto-headless
-    # Install MC Java server in a directory we create
-    adduser minecraft
-    mkdir /opt/minecraft/
-    mkdir /opt/minecraft/server/
-    cd /opt/minecraft/server
-    
-    # Download server jar file from Minecraft official website
-    wget $MINECRAFTSERVERURL
-    
-    # Generate Minecraft server files and create script
-    chown -R minecraft:minecraft /opt/minecraft/
-    java -Xmx1300M -Xms1300M -jar server.jar nogui
-    sleep 40
-    sed -i 's/false/true/p' eula.txt
-    touch start
-    printf '#!/bin/bash\njava -Xmx1300M -Xms1300M -jar server.jar nogui\n' >> start
-    chmod +x start
-    sleep 1
-    touch stop
-    printf '#!/bin/bash\nkill -9 $(ps -ef | pgrep -f "java")' >> stop
-    chmod +x stop
-    sleep 1
-    
-    # Create SystemD Script to run Minecraft server jar on reboot
-    cd /etc/systemd/system/
-    touch minecraft.service
-    printf '[Unit]\nDescription=Minecraft Server on start up\nWants=network-online.target\n[Service]\nUser=minecraft\nWorkingDirectory=/opt/minecraft/server\nExecStart=/opt/minecraft/server/start\nStandardInput=null\n[Install]\nWantedBy=multi-user.target' >> minecraft.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable minecraft.service
-    sudo systemctl start minecraft.service
-    
-    # End script`;
-
-    const userData = ec2.UserData.forLinux();
-    userData.addCommands(userDataScript);
-
+    const userDataScript = readFileSync('lib/userdata.sh', 'utf-8');
+    const userData = ec2.UserData.custom(userDataScript);
     const mcEc2 = new ec2.Instance(this, 'McEc2', {
       instanceName: 'mc-ec2',
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.SMALL),
@@ -109,7 +65,6 @@ export class McStack extends Stack {
       propagateTagsToVolumeOnCreation: true,
     })
 
-    // output public ip
     new CfnOutput(this, 'McServerPublicIp', {
       value: mcEc2.instancePublicIp,
     });
