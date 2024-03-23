@@ -11,5 +11,3 @@ English: https://aws.amazon.com/jp/blogs/gametech/setting-up-a-minecraft-java-se
 ## Required
 
 License: https://www.minecraft.net/ja-jp/store/minecraft-java-bedrock-edition-pc#accordionv1-7118008eee-item-18bc425e2a
-
-
