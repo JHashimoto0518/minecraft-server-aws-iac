@@ -23,5 +23,43 @@ export class McStack extends Stack {
       // See: https://docs.aws.amazon.com/config/latest/developerguide/vpc-default-security-group-closed.html
       restrictDefaultSecurityGroup: true
     });
+
+    //
+    // security group
+    //
+    const mcEc2Sg = new ec2.SecurityGroup(this, 'McEc2Sg', {
+      vpc,
+      allowAllOutbound: true,
+      description: 'for a minecraft server'
+    })
+
+    //
+    // Minecraft server
+    //
+    const mcEc2 = new ec2.Instance(this, 'McEc2', {
+      instanceName: 'mc-ec2',
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.SMALL),
+      machineImage: ec2.MachineImage.latestAmazonLinux2023(),
+      vpc,
+      vpcSubnets: vpc.selectSubnets({
+        subnetType: ec2.SubnetType.PUBLIC,
+      }),
+      associatePublicIpAddress: true,
+      securityGroup: mcEc2Sg,
+      blockDevices: [
+        {
+          deviceName: '/dev/xvda',
+          volume: ec2.BlockDeviceVolume.ebs(8, {
+            encrypted: true
+          }),
+        },
+      ],
+      propagateTagsToVolumeOnCreation: true,
+    })
+
+    // output public ip
+    new CfnOutput(this, 'McServerPublicIp', {
+      value: mcEc2.instancePublicIp,
+    });
   }
 }
