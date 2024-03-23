@@ -38,7 +38,7 @@ export class McStack extends Stack {
     //
     const mcEc2 = new ec2.Instance(this, 'McEc2', {
       instanceName: 'mc-ec2',
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.SMALL),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.SMALL),
       machineImage: ec2.MachineImage.latestAmazonLinux2023(),
       vpc,
       vpcSubnets: vpc.selectSubnets({
