@@ -31,7 +31,11 @@ export class McStack extends Stack {
       vpc,
       allowAllOutbound: true,
       description: 'for a minecraft server'
-    })
+    });
+    mcEc2Sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'allow ssh from anywhere');
+    // See: https://ip-ranges.amazonaws.com/ip-ranges.json
+    mcEc2Sg.addIngressRule(ec2.Peer.ipv4('3.112.23.0/29'), ec2.Port.allTraffic(), 'allow ec2 instance connect from ap-northeast-1 ip range');
+    mcEc2Sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(25565), 'allow minecraft connection from anywhere');
 
     //
     // Minecraft server
